@@ -1,0 +1,640 @@
+#include <MCUFRIEND_kbv.h< 
+MCUFRIEND_kbv tft; 
+#define YP A1    
+#define YM 7     
+#define XM A2 
+#define XP 6   
+#define rxPin 12 
+#define txPin 13     
+#include <SoftwareSerial.h> 
+SoftwareSerial MP3(10,11); // Rx , Tx 
+SoftwareSerial RFID(12, 13); // RX, TX 
+*/--------------------- COIN ACCEPTOR----------------------------
+ const int coinSelector = A5
+ /* 
+תועבטמה ררובמ תואה סנכנ ובש יגולנא קדה 
+const int signalCostFactor = 1דחא לקש אוה סלופ לכ  // ; 
+int signalValue = 0ועבטמה ררובמ ךרעה תרימשל הנתשמ // ; 
+int state  יחכונ בצמ // ; 
+int lastState = 0ןורחא בצמ // ; 
+int balance = 0ןובשחה בצמ // ; 
+int coinValue = 0  יחכונה עבטמה ךרע // ; 
+bool newCoinInserted עבטמ וסינכהש הארמ  // ; 
+int update = 1  ןוכדע שיש הארמ // ; 
+long updateDebounceTime = 0  ןוכדע ונחלשש הנורחאה םעפה // ; 
+long updateDebounceDelay = 500
+ תועגמה רותינ רחאל ילימ 
+500
+ // ;
+ רחאל ןוכדע // ;
+ */------------------------ MP3----------------------------
+/* 
+unsigned char volume=15 עמשה תמצע תא הארמ  //  ; 
+unsigned char mp3Buffer
+ עמשה ןגנ רובע ץצוח //  ;] 
+unsigned char i; 
+byte trackןגנתמ ריש הזיא הארמ //   ; 
+*/------------------------- TFT
+ /* ------------------
+byte tav  שמתשמה ידי לע ץחלנש ותה  //   ; --------
+10
+ [
+ byte randomTav היצקנופה ידי לע ונלביקש ותה  //  ;random  
+37
+long currentTimeתכרעמה תלעפה עגרמ ורבע היינש תויפלא המכ הארמ //   ; 
+long oldTimeםדוקה ןמזה  //   ; 
+int screen=0
+ םיאצמ 
+נ ךסמ הזיאב הארמ  //   ;
+ int x,yךסמ תאירק לש םיינושאר םיכרע ליכמ //    ; 
+unsigned char change םיכסמ תפלחה עצבל שיש הארמ  //  ; 
+bool first ךסמב הנושאר םעפש הארמ  //   ; 
+bool debug=0; 
+*/---------------------------- RFID------------------------------
+ /* 
+byte masterRfid1[14]= 
+{0x2,0x31,0x45,0x30,0x30,0x42,0x35,0x36,0x30,0x46,0x30,0x33,0x42,0x3}; 
+byte acceptid=0; 
+byte masterRfid2[14]= 
+;] 
+{0x2,0x31,0x45,0x30,0x30,0x42,0x35,0x42,0x31,0x32,0x45,0x33,0x34,0x3}; 
+byte rfidArray
+ 14
+ [
+ bool newRfid; 
+**************************// 
+םינתונ   //
+ םיעבצל תועמשמ םע תומש 
+#define BLACK   0x0000 
+#define BLUE      
+0x001F 
+#define RED    0xF800 
+#define GREEN   0x07E0 
+#define CYAN  0x07FF 
+#define MAGENTA 0xF81F 
+#define YELLOW    0xFFE0 
+#define WHITE   0xFFFF 
+הגוצתב תוגצומה תונוש תועדוה   // 
+char str1;}"הקיזומ תבית"{=][ 
+char str2;}"לקש"{=][ 
+char str4;}"היראו יעור לש טקיורפה"{=][ 
+תירבעב םינפוגה תלבט  // 
+char hebrewTavs[28
+ { =] 
+8
+ []
+ 38
+39 
+ 
+{0x11,0x11,0x9,0x0d,0x12,0x11,0x11,0},{0x1e,2,2,2,2,2,0x1f,0},{0x1f,1,1,3,9,0x11,0x
+ 11,0},{0x1f,2,2,2,2,2,2,0} ג ב א  //   , ד 
+{0x1f,1,1,1,0x11,0x11,0x11,0}, 
+{0x0e,2,2,2,2,2,2,0},{0x1f,4,4,8,8,8,8,0},{0x1f,0x11,0x11,0x11,0x11,0x11,0x11,0} //   ,
+   ח ז ו ה 
+{0x11,0x13,0x15,0x11,0x11,0x11,0x1f,0},{0x0e,2,2,2,0,0,0,0},{0x1f,1,1,1,1,1,1,1},{0x
+ 1f,1,1,1,1,1,0x1f,0}  כ  ך י ט  // , 
+{0x10,0x1f,1,1,2,4,8,0},{0x1f,0x11,0x11,0x11,0x11,0x11,0x1f,0},{0x10,0x13,0x0d,0x9
+ ,0x11,0x11,0x17,0},{0x0e,2,2,2,2,2,2,2}  ן ם מ ל  //, 
+{3,1,1,1,1,1,0x1f,0},{0x1f,9,9,9,9,0x9,0x0f},{9,9,9,9,5,5,0x1f,0},{0x1f,0x11,0x11,0x0d,
+ 1,1,1,0},{0x1f,9,9,0x0d,1,1,0x1f,0} ,   ף  פ  ע  ס   נ // 
+{0x11,0x11,0x0a,4,2,1,0,0},{0x11,0x11,0x0a,4,2,1,0x1f,0},{0x1f,1,1,9,9,9,9,8},{0x1f,1,
+ 1,1,1,1,1,0} ר  ק   ץ  צ  //       , 
+{0x15,0x15,0x15,0x15,0x15,0x15,0x1f,0},{0x0f,9,9,9,9,9,0x19,0}ת   ש  //           , 
+{ 0,0,0,0,0,0,0,0 ובע  //    }         חוור ותה ר 
+; {    
+ 
+*********************************// 
+void setup)( 
+} 
+ 
+  */-------------- Mp3-------------------- /* 
+    delay(1000);   //  mp3 ה סיטרכ לש סופיאל הנתמה  // 
+   
+    setVolumeעמשה תמצוע// ;)( 
+    setMode;)( 
+    /**  הדובעה בצמ תעיבק **/ 
+    mp3Buffer[0] = 0x7Eהדוקפה תלחתה //            ; 
+    mp3Buffer[1] = 0x03 אלל ךרואה+ םיוותה תומכ(תזורחמה ךרוא //  ; 2  הלחתה לש םיוותה
+  )םויסו 
+    mp3Buffer[2] = 0xA9 הדובע בצמ תעיבק //          ; 
+    mp3Buffer[3] = 0x00דדוב ריש //          ; 
+    mp3Buffer[4] = 0x7Eהדוקפה םויס //          ; 
+    Command;)( 
+     
+40 
+ 
+     מ העמשה **/ UDISK  םוקימ( רפסמ רישמ 3  ו 4 /* ) 
+    mp3Buffer[0] = 0x7Eהדוקפה תלחתה //    ; 
+    mp3Buffer[1] = 0x04 אלל ךרואה+ םיוותה תומכ(תזורחמה ךרוא // ; 2  הלחתה לש םיוותה
+  )םויסו 
+    mp3Buffer[2] = 0xA2 מ ריש ןגנ //    ;UDISK םיאבה םיתבה ינשב ורפסמש 
+    mp3Buffer[3] = 0x00רישה רפסמ לש הובגה קלחה //    ; 
+    mp3Buffer[4] = 0x00רישה רפסמ לש ךומנה קלחה //    ; 
+    mp3Buffer[5] = 0x7E          ; 
+    Command;)( 
+    
+ *******************/TFT  /******************** 
+  tft.reset;)( 
+  tft.begin(0x9481) לש ךסמה רובע  //  ; 3.2 ץניא 
+  tft.setRotation ( 1 ;) 
+  tft.fillScreen(BLACK); 
+  first=1; 
+  shortScreen;)( 
+  delay ( 3000 ;) 
+  menuScreenתונוש תוגוצת ןיב הריחב ךסמ  //  ;)( 
+ { 
+ 
+**********************************// 
+void loop)( 
+} 
+switch (screen) 
+ } 
+  case 0: 
+    menuScreen;)( 
+  break; 
+  case 1: 
+    TrackScreen;)( 
+  break; 
+  } 
+} 
+  
+41 
+ 
+ יפ םא לש תויצקנופ   ***********************/ 3  /****** 
+ ה סיטרכל תזורחמה תא תירוט הרוצב האיצומה היצקנופ //MP3    
+void Command)( 
+} 
+    unsigned i; 
+    for(i=0; i<mp3Buffer[1]+2; i++) 
+    } 
+        MP3.write(mp3Buffer[i]); 
+    { 
+{ 
+ 
+void playPause)( 
+} 
+   mp3Buffer[0] = 0x7Eהדוקפה תלחתה //    ; 
+   mp3Buffer[1] = 0x02 אלל ךרואה+ םיוותה תומכ(תזורחמה ךרוא // ; 2  הלחתה לש םיוותה
+  )םויסו 
+   mp3Buffer[2] = 0xA3 רוצע וא העמשה תדוקפ //   ; 
+   mp3Buffer[5] = 0x7Eהדוקפה םויס //   ; 
+   Command ה סיטרכל תזורחמה תא תירוט הרוצב האיצומה היצקנופ ןומיז // ;)(MP3    
+{ 
+ 
+ הקספה   //-  רישה לש הריצע 
+void Stop)( 
+} 
+  mp3Buffer[0] = 0x7E   הדוקפה תלחתה //       ; 
+  mp3Buffer[1] = 0x02 אלל ךרואה+ םיוותה תומכ(תזורחמה ךרוא //    ; 2  הלחתה לש םיוותה
+      )םויסו 
+  mp3Buffer[2] = 0xA4         ; 
+  mp3Buffer[3] = 0x7E םויס //        ; הדוקפה 
+  Command ה סיטרכל תזורחמה תא תירוט הרוצב האיצומה היצקנופ ןומיז //  ;)(MP3    
+{ 
+ 
+ םוקימב ורפסמש יוצר ריש לש הלעפה   // 3  ו 4  
+void playTrack(unsigned char trackNumber) 
+} 
+42 
+ 
+   
+   mp3Buffer[0] = 0x7Eהדוקפה תלחתה //    ; 
+   mp3Buffer[1] = 0x04 ךרוא //   ;  אלל ךרואה+ םיוותה תומכ(תזורחמה 2  הלחתה לש םיוותה
+ )םויסו 
+   mp3Buffer[2] = 0xA2יקנואקסידב שומיש//   ; 
+   mp3Buffer[3] = 0x00 רישה רפסמ לש הובגה תייבה //   ; 
+   mp3Buffer[4] = trackNumber רישה רפסמ לש ךומנה תייבה //   ; 
+   mp3Buffer[5] = 0x7E םויס //   ; הדוקפה 
+   Command ה סיטרכל תזורחמה תא תירוט הרוצב האיצומה היצקנופ ןומיז // ;)(MP3    
+}  
+ 
+/*  העימשה תמצע תעיבק **/ 
+void setVolume)( 
+} 
+    mp3Buffer[0] = 0x7Eהדוקפה תלחתה //    ; 
+    mp3Buffer[1] = 0x03 אלל ךרואה+ םיוותה תומכ(תזורחמה ךרוא //  ; 2 ה לש םיוותה הלחת
+ )םויסו 
+    mp3Buffer[2] = 0xA7עמש תמצע תעיבק תדוקפ //   ; 
+    mp3Buffer[3] = volume עמש תמר //   ; 15  ךותמ 31 תוירשפא 
+    mp3Buffer[4] = 0x7Eהדוקפה םויס //   ; 
+    Command ה סיטרכל תזורחמה תא תירוט הרוצב האיצומה היצקנופ ןומיז // ;)(MP3    
+{ 
+ 
+עיבק   //   : הדובעה בצמ ת 00  דבלב דחא ריש ןגנל 
+  // 01    רישה לע רוזח 02     לכה לע רוזח 03   יארקא ןגנ 
+void setMode)( 
+} 
+    mp3Buffer[0] = 0x7Eהדוקפה תלחתה //            ; 
+    mp3Buffer[1] = 0x03 אלל ךרואה+ םיוותה תומכ(תזורחמה ךרוא //   ; 2  הלחתה לש םיוותה
+ )םויסו 
+    mp3Buffer[2] = 0xA9 הדובע בצמ תעיבק //          ; 
+    mp3Buffer[3] = 0x00דדוב ריש //          ; 
+    mp3Buffer[4] = 0x7Eהדוקפה םויס //          ; 
+    Command ה סיטרכל תזורחמה תא תירוט הרוצב האיצומה היצקנופ ןומיז //  ;)(MP3    
+{ 
+43 
+ 
+ 
+  הדובעה בצמ תקידב  // 
+void checkWorkState)( 
+} 
+   int i=0,myBuffer [ 10 ;] 
+   // for(i=0;i<10;i++) 
+   mp3Buffer[0] = 0x7Eהדוקפה תלחתה //    ; 
+   mp3Buffer[1] = 0x02 אלל ךרואה+ םיוותה תומכ(תזורחמה ךרוא //   ; 2  הלחתה לש םיוותה
+ )םויסו 
+   mp3Buffer[2] = 0xC2הדובע בצמ תאירק תדוקפ //   ; 
+   mp3Buffer[3] = 0x7Eהדוקפה םויס //   ; 
+   Command ה סיטרכל תזורחמה תא תירוט הרוצב האיצומה היצקנופ ןומיז // ;)(MP3    
+  i=0; 
+   myBuffer[1]==0; 
+   while(MP3.available()>0) 
+      myBuffer[i++]=MP3.read;)( 
+    if(myBuffer[0]==0xc2 && myBuffer[1]==2)   
+     } 
+      screen=0; 
+      first=1; 
+     { 
+    
+   for(i=0;i<10;i++) 
+   } 
+     Serial.print(myBuffer[i],HEX); 
+     Serial.print;)"    "( 
+   { 
+   Serial.println;)( 
+   
+{ 
+ 
+ ******************** //RFID   *********************************** 
+  void StartRFID(){ 
+    Serial.begin ( 9600 ;) 
+    Serial.println("Serial Ready"); 
+44 
+ 
+    RFID.begin ( 9600 ;) 
+    Serial.println("RFID Ready"); 
+ } 
+  void StartMP3(){ 
+    Serial.begin ( 9600 ;) 
+    MP3.begin ( 9600 ;) 
+   { 
+*******************************// 
+  החיתפ ךסמב    היראו יעור גיצמ  // 
+void shortScreen)( 
+{ 
+  if(first) 
+  { 
+    first=0; 
+    tft.fillScreen(BLACK); 
+    drawHebrewString(50,120,str4,GREEN,3); 
+    tft.setCursor ( 60,200 ;) 
+    tft.setTextSize ( 5 ;) 
+    tft.setTextColor(RED); 
+    tft.println("JukeBox v2.0"); 
+    first=1; 
+  } 
+} 
+  
+ היוצרה הגוצתה לע הריחבל טירפת ךסמ  // 
+void menuScreen  )( 
+} 
+  if(first) 
+    } 
+      first=0; 
+       ןגנתמה רישה תריצע  // 
+      Stop  ;)( 
+      MP3.end;)( 
+      StartRFID;)( 
+      // balance=0; 
+45 
+ 
+      acceptid=0; 
+    ןושארה ךסמה   //- החנמהו םיננכתמה ךסמ 
+    tft.fillScreen(BLACK); 
+    tft.setCursor ( 10 , 20 ;) 
+    tft.setTextSize ( 3 ;) 
+    tft.setTextColor(CYAN); 
+    tft.print("insert a coin"); 
+    tft.setCursor ( 10,60 ;) 
+    tft.setTextSize ( 3 ;) 
+    tft.setTextColor(CYAN); 
+    tft.println("works with:\n\n 1,2,5"); 
+     
+    tft.drawRoundRect(5,175,290,140,10,WHITE); //show how much money inserted 
+    tft.setCursor ( 20,180 ;) 
+    tft.setTextColor(MAGENTA); 
+    tft.setTextSize ( 3 ;) 
+    tft.print("coins inserted:"); 
+ 
+    tft.setCursor ( 110,230 ;) 
+    tft.setTextColor(YELLOW); 
+    tft.setTextSize ( 7 ;) 
+    tft.print(balance); 
+    //----    תורוצ לע הציחל רובע ןבלמ----- 
+    if(balance<1) 
+     tft.drawRoundRect(340,28,135,70,10,RED); 
+    else 
+     tft.drawRoundRect(340,28,135,70,10,GREEN) ; 
+    tft.setCursor ( 355,45 ;) 
+    tft.setTextColor(WHITE); 
+    tft.setTextSize ( 3 ;) 
+    tft.print("Track1"); 
+    tft.setTextSize ( 2 ;) 
+    tft.setCursor ( 390,80 ;) 
+    tft.setTextColor(YELLOW); 
+    tft.print "( 1 ;)" 
+46 
+ 
+    drawHebrewString(350,80,str2,YELLOW,2)לקש// ; 
+     
+    if(balance<3) 
+     tft.drawRoundRect(340,128,135,70,10,RED); 
+    else 
+     tft.drawRoundRect(340,128,135,70,10,GREEN); 
+    tft.setCursor ( 355,145 ;) 
+    tft.setTextColor(WHITE); 
+    tft.setTextSize ( 3 ;) 
+    tft.println("Track2"); 
+    tft.setTextSize ( 2 ;) 
+    tft.setCursor ( 390,180 ;) 
+    tft.setTextColor(YELLOW); 
+    tft.print "( 3 ;)" 
+    drawHebrewString(350,180,str2,YELLOW,2)לקש// ; 
+     
+    if(balance<8) 
+     tft.drawRoundRect(340,228,135,70,10,RED); 
+    else 
+     tft.drawRoundRect(340,228,135,70,10,GREEN); 
+    tft.setCursor ( 355,245 ;) 
+    tft.setTextColor(WHITE); 
+    tft.setTextSize ( 3 ;) 
+    tft.println("Track3"); 
+    tft.setTextSize ( 2 ;) 
+    tft.setCursor ( 390,280 ;) 
+    tft.setTextColor(YELLOW); 
+    tft.print "( 8 ;)" 
+    drawHebrewString(350,280,str2,YELLOW,2)לקש//  ; 
+   { 
+   coinAcceptor;)( 
+   if(newCoinInserted) 
+   } 
+    newCoinInserted=0; 
+    tft.fillRect(15,230,260,50,BLACK); 
+47 
+ 
+    tft.setCursor ( 110,230 ;) 
+    tft.setTextColor(YELLOW); 
+    tft.setTextSize ( 7 ;) 
+    tft.print(balance); 
+   { 
+   rfid המ האירקל היצקנופ  //    ;)(RFID 
+   touch//   ;)( 
+{ 
+//-----    ךסמב הציחל ירועש תטילקל היצקנופ----- 
+void touch)( 
+} 
+  int x,y; 
+  
+  סקיא ירועש תאירק  // 
+  pinMode(XM,INPUT); 
+  pinMode(XP,INPUT); 
+  pinMode(YP,OUTPUT); 
+  pinMode(YM,OUTPUT); 
+  digitalWrite(YM,LOW); 
+  digitalWrite(YP,HIGH); 
+   x=analogRead(XM); 
+ 
+  ייאוו ירועש תאירק  // 
+  pinMode(XM,OUTPUT); 
+  pinMode(XP,OUTPUT); 
+  pinMode(YM,INPUT); 
+  pinMode(YP,INPUT); 
+  // digitalWrite(YM,0); 
+  digitalWrite(XM,0); 
+  digitalWrite(XP,1); 
+  y=analogRead(YP); 
+   
+  pinMode(YM,OUTPUT); 
+  pinMode(YP,OUTPUT); 
+ if(debug) 
+48 
+ 
+ }  
+ Serial.print("x =   "); 
+ Serial.print(x); 
+  Serial.print("   y =   "); 
+  Serial.println(y); 
+ 
+ { 
+ if(screen==0)     ישארה טירפתה ךסמ  // 
+ } 
+  if(x>=190 && x <=310 &&  y>=90 && y<= 300 && (balance>=1 || acceptid==1))   //
+ ל רפסמ ריש תריחב 1 
+  } 
+    screen=1 ; 
+    first=1; 
+    track=1 רפסמ ריש  //   ; 1 
+    if(acceptid==0) 
+     balance=balance-1; 
+  { 
+   else  if(x>=430 && x <=550 &&  y>= 100 && y<= 300 && (balance>=3 || 
+acceptid==1))  רפסמ רישל// 2 
+  } 
+    screen=1 ; 
+    first=1; 
+    track=2 רפסמ ריש  //  ; 2 
+    if(acceptid==0) 
+     balance=balance-3; 
+  { 
+  else  if(x>=660 && x <=800 && y>95&& y<= 300 && (balance>=8|| acceptid==1)) 
+  רפסמ רישל// 3  
+  } 
+    screen=1 ; 
+    first=1; 
+    track=3 רפסמ ריש  //  ; 3 
+    if(acceptid==0) 
+     balance=balance-8; 
+49 
+ 
+  { 
+ { 
+  
+ else if(screen==1)   ריש ןגנמה ךסמב םיאצמנ םא// 
+ } 
+  if(x>=760 && x<=850  && y>= 120 && y<= 270)     רוזח לע ונצחל םאה  // 
+  } 
+    screen=0; 
+    first=1; 
+   
+   { 
+  
+ {  
+{  
+  
+  םירישה תעמשהל היצקנופ  // 
+void TrackScreen)( 
+} 
+  int answerFromMp3; 
+  if(first) 
+  } 
+    first=0; 
+    RFID.end;)( 
+    StartMP3;)( 
+    tft.setTextSize ( 3 ;) 
+    tft.fillScreen(BLACK); 
+    tft.setCursor ( 110,130 ;) 
+    tft.setTextColor(YELLOW); 
+    tft.print("playing track "); 
+    tft.print(track) רישה רפסמ תא םושרל  //   ; 
+    playTrack(track); 
+    tft.drawRoundRect(360,275,100,40,10,WHITE); 
+    tft.setCursor ( 380 , 285 ;) 
+    tft.print("BACK"); 
+  { 
+50 
+ 
+  checkWorkState הדובע בצמ תקידב  //   ;)(- ? םייתסה רישה םאה 
+  touch;)( 
+{ 
+ 
+ תישאר תא תלבקמ איה .ךסמב ותוא תרייצמו  תירבעב ות תלבקמ איה .ות רויצל היצקנופ   //
+ ליחתי ותהש תוטנידרואוקה 
+   ןפוגה לדוג תאו ותה עבצ תא  תירבעב ותה תא תלבקמ איה .ייאוו ו סקיא תודוקנ // 
+void drawHebrewTav(int x, int y,byte *tav, int color,int tavSize) 
+} 
+  int x0=x,y0=y,i,j,sizeX,sizeY; 
+  byte check; 
+   for (i=0;i<8;i++,tav++) 
+   for(sizeY=0;sizeY<tavSize;sizeY++,y0++) 
+    for(x0=x,check=16,j=0; j<5;x0=x0+tavSize,check=check>>1,j++) 
+      if(*tav &check) 
+       for(sizeX=0;sizeX<tavSize;sizeX++) 
+         tft.drawPixel(x0+sizeX,y0,color); 
+{ 
+void drawHebrewString(int x,int y,byte *ptr,int color,int tavSize) 
+} 
+   char englishTav; 
+   byte *ptr1=ptr; 
+   while(*ptr++); 
+   ptr=ptr-2; 
+   for(int x0=x;ptr>ptr1;ptr--,x0=x0+tavSize*5+tavSize) 
+  } 
+    if(*ptr>0xb0) 
+      ptr-- ; 
+    if(*ptr > 0x80 ) 
+      drawHebrewTav(x0,y,hebrewTavs[*ptr-0x90],color,tavSize); 
+    else if(*ptr==' ')   חוור אוה ותה םאה   // 
+      drawHebrewTav(x0,y,hebrewTavs[27],color,tavSize)חוור גיציש  //  ; 
+    else 
+    } 
+    englishTav=*ptr; 
+51 
+ 
+    tft.setCursor(x0, y); 
+    tft.setTextColor(color) ; 
+    tft.setTextSize(tavSize); 
+    tft.print(englishTav); 
+    x0=x0+tavSize*5+tavSize; 
+    { 
+   { 
+{ 
+ 
+**********  תועבטמה ררובב לופיטל היצקנופ   *******// 
+void coinAcceptor)( 
+} 
+ signalValue = analogRead(coinSelector)  תועבטמה ררוב תסינכמ יגולנא ךרע ארק // ; 
+  if (signalValue > 1000)  
+  } 
+    newCoinInserted=1; 
+    state = 1; // State is 1 as we're high 
+     
+  {  
+  else  
+  } 
+    state = 0; 
+     // Should we send a balance update 
+    if (update == 0) 
+      } 
+       if ((millis() - updateDebounceTime) > updateDebounceDelay)  
+        } 
+         Serial.print("Coin Value: "); 
+         Serial.println(coinValue); // WARNING: The coin value will be wrong if coins are 
+inserted within the updateDebounceDelay, adjust the delay and test 
+         Serial.print("Balance: "); 
+         Serial.println(balance); // This should be the most accurate as we should get 
+the same ammount of pulses even if multiple coins get inserted at once 
+        coinValue = 0; // Reset current coin value 
+        update = 1; // Make sure we don't run again, till next coin 
+52 
+ 
+        first=1ךסמה תא בוש רייצל  //  ; 
+      { 
+    { 
+  { 
+  if (state != lastState) 
+  } 
+     // Process new signal 
+    if (state == 1) 
+    } 
+      Serial.println("state 1"); 
+      balance = balance + signalCostFactor; // Update balance 
+      coinValue = coinValue + signalCostFactor; // Update coin value 
+      updateDebounceTime = millis(); // Update last time we processed a signal 
+      update = 0; // Time to send a update now? 
+      
+    { 
+    else 
+    } 
+      Serial.println("updated"); 
+    { 
+    lastState = state; // Update last state 
+    { 
+  delay ( 1 ;) 
+{ 
+ 
+ */-------------------------RFID-------------------------/* 
+void  rfid)( 
+} 
+  int i=0; 
+  while(RFID.available()) 
+  } 
+  for (i=0; (i<14);i++) 
+    } 
+     Serial.println("reading"); 
+      } 
+53 
+ 
+      rfidArray[i]= RFID.read;)( 
+      Serial.print(rfidArray[i],HEX); 
+       { 
+       Serial.println;)( 
+    { 
+  { 
+    if(i==14)   וטלקנ םאה  // 14 ? םיוות 
+    } 
+       טלקנש דוקהו רטסמ דוק ןיב האוושה  // 
+      for (i=0;i<14&&masterRfid1[i]==rfidArray[i];i++) ; 
+      if(i==14)  תישפוח השיג רשפאמו  רטסמ אוה טלקנה דוקה  // 
+       }   
+        acceptid=1; 
+        tft.fillRect(15,230,260,50,BLACK); 
+        tft.setCursor ( 15,240 ;) 
+        tft.setTextColor(GREEN); 
+        tft.setTextSize ( 4 ;) 
+        tft.print("free access"); 
+        tft.drawRoundRect(340,28,135,70,10,GREEN); 
+        tft.drawRoundRect(340,128,135,70,10,GREEN); 
+        tft.drawRoundRect(340,228,135,70,10,GREEN); 
+        RFID.flush;)( 
+       { 
+       else   רכומ אל פי'צ והז   // 
+       } 
+        tft.fillRect(15,230,260,50,BLACK); 
+        tft.setCursor ( 80,240 ;) 
+        tft.setTextColor(RED); 
+        tft.setTextSize ( 4 ;) 
+        tft.print("ERROR"); 
+        RFID.flush ;)( 
+       { 
+     {   
+{  
